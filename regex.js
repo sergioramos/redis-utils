@@ -1,0 +1,1 @@
+module.exports = /\[\d*\] \d{2} .*? \d{2}:\d{2}:\d{2} \* The server is now ready to accept connections on port \d*/

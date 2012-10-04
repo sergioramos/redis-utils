@@ -1,0 +1,21 @@
+{
+  "name": "spawn-redis",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ramitos/spawn_redis"
+  },
+  "keywords": [
+    "spawn",
+    "redis"
+  ],
+  "author": "Sérgio Ramos <mail@sergioramos.me>",
+  "license": "MIT",
+  "dependencies": {
+    "redis": "0.8.x"
+  },
+  "engines": {
+    "node": "0.8.x"
+  }
+}
