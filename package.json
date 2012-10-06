@@ -1,10 +1,10 @@
 {
-  "name": "spawn-redis",
-  "version": "0.1.0",
+  "name": "redis-utils",
+  "version": "0.1.1",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ramitos/spawn_redis"
+    "url": "https://github.com/ramitos/redis-utils"
   },
   "keywords": [
     "spawn",

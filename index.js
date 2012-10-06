@@ -4,6 +4,9 @@ var rediis = require('redis-node'),
     redis = require('redis'),
     fs = require('fs')
 
+/******************************* SERVER/CLIENT ********************************/
+
+
 var defaults = {
   port: '6379',
   host: '127.0.0.1'
@@ -15,6 +18,25 @@ var ensure = function (config, args) {
   if(!config.port) config.port = defaults.port
 
   return args
+}
+
+/********************************** SERVER ************************************/
+
+module.exports.server = function (config, callback) {
+  if(!config) config = {}
+  var args = ensure(config, [])
+
+  var onRunning = function (e, running) {
+    if(running) return callback()
+    spawn(args, callback)
+  }
+
+  var onConfig = function () {
+    running(config, onRunning)
+  }
+
+  if(args.length > 0) return parse(config, onConfig)
+  onConfig()
 }
 
 var running = function (config, callback) {
@@ -60,27 +82,12 @@ var spawn = function (args, callback) {
     if(data.toString().match(regex)) callback(null)
   })
 
-  process.on('exit', rs.kill)
+  process.on('exit', function () {
+    rs.kill()
+  })
 }
 
-module.exports.server = function (config, callback) {
-  var rs
-
-  if(!config) config = {}
-  var args = ensure(config, [])
-
-  var onRunning = function (e, running) {
-    if(running) return callback()
-    spawn(args, callback)
-  }
-
-  var onConfig = function () {
-    running(config, onRunning)
-  }
-
-  if(args.length > 0) return parse(config, onConfig)
-  onConfig()
-}
+/********************************** CLIENT ************************************/
 
 module.exports.client = function (config, callback) {
   var state = {
@@ -89,8 +96,8 @@ module.exports.client = function (config, callback) {
   }
 
   var check = function () {
-    if(config.auth && (state.ready && state.auth)) callback()
-    else if(state.ready) callback()
+    if(config.auth && (state.ready && state.auth)) callback(client)
+    else if(state.ready) callback(client)
   }
 
   if(!config) config = {}
@@ -109,8 +116,70 @@ module.exports.client = function (config, callback) {
   })
 
   client.on('error', function (e) {
-    callback(e)
+    throw e
+  })
+
+  process.on('exit', function () {
+    client.quit()
   })
 
   return client
+}
+
+/********************************** PUBSUB ************************************/
+
+var parse_evs = function (evs) {
+  if(typeof evs === 'string') {
+    var ev = evs
+    evs = [ev]
+  }
+
+  return evs
+}
+
+module.exports.pubsub = function (config, cbs, evs, callback) {
+  evs = parse_evs(evs)
+
+  var client = module.exports.client(config, function () {    
+    client.on('message', function (channel, message) {
+      if(cbs[channel]) cbs[channel](message)
+    })
+
+    evs.forEach(function (ev) {
+      client.subscribe(ev)
+    })
+
+    process.on('exit', client.end)
+
+    callback(null, client)
+  })
+
+  var unsubscribe = function (_evs) {
+    if(_evs) _evs = parse_evs(_evs)
+
+    var __evs = _evs || evs
+
+    __evs.forEach(function (ev) {
+      client.unsubscribe(ev)
+    })
+  }
+
+  var end = function () {
+    client.quit()
+  }
+
+  process.on('exit', end)
+
+  return {
+    unsubscribe: unsubscribe,
+    end: end
+  }
+}
+
+module.exports.pubsub.add = function (client, evs) {
+  evs = parse_evs(evs)
+
+  evs.forEach(function (ev) {
+    client.subscribe(ev)
+  })
 }
