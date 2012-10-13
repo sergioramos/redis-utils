@@ -86,7 +86,7 @@ var spawn = function (args, callback) {
   })
 
   rs.stdout.on('data', function (data) {
-    if(data.toString().match(regex)) callback(null)
+    if(data.toString().match(regex.running)) callback(null)
   })
 
   process.on('exit', function () {
