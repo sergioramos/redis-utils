@@ -25,18 +25,24 @@ var ensure = function (config, args) {
 module.exports.server = function (config, callback) {
   if(!config) config = {}
   var args = ensure(config, [])
+  var rs = null
+  var res = {kill: function () {
+    rs.kill()
+  }}
 
   var onRunning = function (e, running) {
     if(running) return callback()
-    spawn(args, callback)
+    rs = spawn(args, callback)
   }
 
   var onConfig = function () {
     running(config, onRunning)
   }
 
-  if(args.length > 0) return parse(config, onConfig)
-  onConfig()
+  if(args.length > 0) parse(config, onConfig)
+  else onConfig()
+
+  return res
 }
 
 var running = function (config, callback) {
@@ -76,6 +82,7 @@ var spawn = function (args, callback) {
 
   rs.stderr.on('data', function (e) {
     callback(new Error(e.toString()))
+    rs.kill()
   })
 
   rs.stdout.on('data', function (data) {
@@ -85,6 +92,8 @@ var spawn = function (args, callback) {
   process.on('exit', function () {
     rs.kill()
   })
+
+  return rs
 }
 
 /********************************** CLIENT ************************************/
