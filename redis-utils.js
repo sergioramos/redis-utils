@@ -105,8 +105,8 @@ module.exports.client = function (config, callback) {
   }
 
   var check = function () {
-    if(config.auth && (state.ready && state.auth)) callback(client)
-    else if(state.ready) callback(client)
+    if(config.auth && (state.ready && state.auth)) callback(null, client)
+    else if(state.ready) callback(null, client)
   }
 
   if(!config) config = {}
@@ -146,10 +146,10 @@ var parse_evs = function (evs) {
   return evs
 }
 
-module.exports.pubsub = function (config, cbs, evs, callback) {
+module.exports.pubsub = function (config, cbs, evs) {
   evs = parse_evs(evs)
 
-  var client = module.exports.client(config, function () {    
+  var client = module.exports.client(config, function () {
     client.on('message', function (channel, message) {
       if(cbs[channel]) cbs[channel](message)
     })
@@ -159,8 +159,6 @@ module.exports.pubsub = function (config, cbs, evs, callback) {
     })
 
     process.on('exit', client.end)
-
-    callback(null, client)
   })
 
   var unsubscribe = function (_evs) {
