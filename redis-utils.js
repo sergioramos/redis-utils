@@ -6,6 +6,7 @@ var rediis = require('redis-node'),
 
 /******************************* SERVER/CLIENT ********************************/
 
+var noop = function () {}
 
 var defaults = {
   port: '6379',
@@ -110,6 +111,7 @@ module.exports.client = function (config, callback) {
   }
 
   if(!config) config = {}
+  if(!callback) callback = noop
   ensure(config)
 
   var client = redis.createClient(config.port, config.host)
